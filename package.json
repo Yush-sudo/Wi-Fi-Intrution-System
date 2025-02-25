@@ -1,19 +1,12 @@
 {
-  "name": "vending-machine",
+  "name": "wifi-vending-machine",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "WebSocket server for vending machine monitoring",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.21.2",
-    "fs": "^0.0.1-security"
-  },
-  "devDependencies": {},
-  "description": ""
+    "ws": "^8.15.0"
+  }
 }
