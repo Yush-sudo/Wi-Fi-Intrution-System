@@ -2,60 +2,47 @@ const express = require("express");
 const http = require("http");
 const WebSocket = require("ws");
 
+const PORT = process.env.PORT || 10000;
 const app = express();
-const PORT = process.env.PORT || 10000; // Make sure Render assigns the correct port
+const server = http.createServer(app); // Create an HTTP server
 
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ noServer: true }); // ✅ Fix: noServer mode
+// Create WebSocket server and attach it to the HTTP server
+const wss = new WebSocket.Server({ server });
 
-// ✅ Handle HTTP requests (Prevents "Upgrade Required" error)
 app.get("/", (req, res) => {
     res.send("✅ WebSocket Server is Running! Use WebSockets to connect.");
 });
 
-// ✅ Handle WebSocket Upgrade Correctly (Fixes the crash issue)
-server.on("upgrade", (req, socket, head) => {
-    if (req.url === "/") {
-        wss.handleUpgrade(req, socket, head, (ws) => {
-            wss.emit("connection", ws, req);
-        });
-    } else {
-        socket.destroy();
-    }
+server.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
 });
 
-// ✅ WebSocket Connection Handling
 wss.on("connection", (ws) => {
-    console.log("✅ WebSocket Client Connected!");
+    console.log("✅ New WebSocket client connected!");
 
     ws.on("message", (message) => {
         console.log(`📩 Received: ${message}`);
     });
 
     ws.on("close", () => {
-        console.log("❌ Client Disconnected");
+        console.log("❌ WebSocket client disconnected");
     });
 
-    // ✅ Send sales updates every 5 seconds
-    const sendSalesUpdate = () => {
+    // Send sales updates every 5 seconds
+    setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) {
-            const salesData = {
+            ws.send(JSON.stringify({
                 type: "salesUpdate",
                 data: {
                     daily: Math.floor(Math.random() * 1000),
                     weekly: Math.floor(Math.random() * 7000),
                     monthly: Math.floor(Math.random() * 30000)
                 }
-            };
-            ws.send(JSON.stringify(salesData));
+            }));
         }
-    };
-
-    const interval = setInterval(sendSalesUpdate, 5000);
-    ws.on("close", () => clearInterval(interval));
+    }, 5000);
 });
 
-// ✅ Start Server on the Correct Port
-server.listen(PORT, "0.0.0.0", () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+wss.on("error", (err) => {
+    console.error(`❌ WebSocket server error: ${err.message}`);
 });

@@ -1,44 +1,23 @@
 const socket = new WebSocket("wss://wi-fi-intrution-system.onrender.com");
 
 socket.onopen = () => {
-    console.log("✅ WebSocket connected!");
-};
-
-socket.onmessage = (event) => {
-    console.log("📩 Received data:", event.data);
-    
-    const salesData = JSON.parse(event.data);
-
-    // Update the dashboard UI
-    document.getElementById("daily-sales").innerText = `₱${salesData.data.daily}`;
-    document.getElementById("weekly-sales").innerText = `₱${salesData.data.weekly}`;
-    document.getElementById("monthly-sales").innerText = `₱${salesData.data.monthly}`;
-};
-
-socket.onerror = (error) => {
-    console.error("❌ WebSocket Error:", error);
-};
-
-socket.onclose = () => {
-    console.warn("⚠️ WebSocket Disconnected. Reconnecting...");
-    setTimeout(() => {
-        location.reload();
-    }, 5000);
-};
-const socket = new WebSocket("wss://wi-fi-intrution-system.onrender.com");
-
-socket.onopen = () => {
-    console.log("✅ WebSocket connected!");
+    console.log("✅ WebSocket Connected!");
+    document.getElementById("status").textContent = "🟢 Connected";
 };
 
 socket.onmessage = (event) => {
     console.log("📩 Message from server:", event.data);
     try {
-        const data = JSON.parse(event.data);
-        if (data.type === "salesUpdate") {
-            document.getElementById("daily-sales").textContent = `₱${data.data.daily}`;
-            document.getElementById("weekly-sales").textContent = `₱${data.data.weekly}`;
-            document.getElementById("monthly-sales").textContent = `₱${data.data.monthly}`;
+        const message = JSON.parse(event.data);
+
+        if (message.type === "salesUpdate") {
+            document.getElementById("daily-sales").textContent = `₱${message.data.daily}`;
+            document.getElementById("weekly-sales").textContent = `₱${message.data.weekly}`;
+            document.getElementById("monthly-sales").textContent = `₱${message.data.monthly}`;
+        }
+
+        if (message.type === "intrusionAlert") {
+            document.getElementById("alert-notification").style.display = "block";
         }
     } catch (error) {
         console.error("❌ Error parsing WebSocket message:", error);
@@ -46,10 +25,23 @@ socket.onmessage = (event) => {
 };
 
 socket.onclose = () => {
-    console.log("❌ WebSocket disconnected! Reconnecting...");
-    setTimeout(() => location.reload(), 5000); // Auto-reconnect
+    console.warn("❌ WebSocket Disconnected! Retrying...");
+    document.getElementById("status").textContent = "🔴 Disconnected. Reconnecting...";
+    setTimeout(() => {
+        location.reload(); // Refresh page to reconnect
+    }, 5000);
 };
 
 socket.onerror = (error) => {
-    console.error("❌ WebSocket error:", error);
+    console.error("❌ WebSocket Error:", error);
 };
+
+// Disable alarm button event
+document.getElementById("disable-alarm").addEventListener("click", () => {
+    if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "disableAlarm" }));
+        document.getElementById("alert-notification").style.display = "none";
+    } else {
+        console.error("🚨 WebSocket not connected. Cannot send disableAlarm.");
+    }
+});

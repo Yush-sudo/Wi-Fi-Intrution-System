@@ -40,9 +40,10 @@
 
     <script>
         let socket;
-        let reconnectInterval = 5000; // 5 seconds
+        const reconnectInterval = 5000; // 5 seconds
 
         function connectWebSocket() {
+            console.log("🔄 Attempting WebSocket connection...");
             socket = new WebSocket("wss://wi-fi-intrution-system.onrender.com");
 
             socket.onopen = () => {
@@ -51,17 +52,19 @@
             };
 
             socket.onmessage = (event) => {
-                console.log("📩 Message from server:", event.data);
+                console.log("📩 Message received:", event.data);
                 try {
                     const data = JSON.parse(event.data);
 
                     if (data.type === "salesUpdate") {
-                        document.getElementById("daily-sales").textContent = `₱${data.data.daily}`;
-                        document.getElementById("weekly-sales").textContent = `₱${data.data.weekly}`;
-                        document.getElementById("monthly-sales").textContent = `₱${data.data.monthly}`;
+                        console.log("💰 Updating sales:", data.data);
+                        document.getElementById("daily-sales").textContent = `₱${data.data.daily || 0}`;
+                        document.getElementById("weekly-sales").textContent = `₱${data.data.weekly || 0}`;
+                        document.getElementById("monthly-sales").textContent = `₱${data.data.monthly || 0}`;
                     }
 
                     if (data.type === "intrusionAlert") {
+                        console.log("🚨 Intrusion alert detected!");
                         document.getElementById("alert-notification").style.display = "block";
                     }
                 } catch (error) {
@@ -70,20 +73,25 @@
             };
 
             socket.onclose = () => {
-                console.log("❌ WebSocket disconnected! Reconnecting...");
+                console.warn("❌ WebSocket disconnected. Reconnecting...");
                 document.getElementById("status").textContent = "🔴 Disconnected. Reconnecting...";
                 setTimeout(connectWebSocket, reconnectInterval);
             };
 
             socket.onerror = (error) => {
-                console.error("❌ WebSocket error:", error);
+                console.error("⚠️ WebSocket error:", error);
             };
         }
 
-        connectWebSocket(); // Start WebSocket connection
+        // Ensure DOM is loaded before running JavaScript
+        document.addEventListener("DOMContentLoaded", () => {
+            console.log("✅ Document loaded! Connecting WebSocket...");
+            connectWebSocket();
+        });
 
-        // Disable alarm button event
+        // Handle alarm disable
         document.getElementById("disable-alarm").addEventListener("click", () => {
+            console.log("🛑 Disabling alarm...");
             if (socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({ type: "disableAlarm" }));
                 document.getElementById("alert-notification").style.display = "none";
