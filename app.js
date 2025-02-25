@@ -6,9 +6,9 @@ socket.onopen = () => {
 };
 
 socket.onmessage = (event) => {
-    console.log("📩 Message from server:", event.data);
     try {
         const message = JSON.parse(event.data);
+        console.log("📩 Message Received:", message);
 
         if (message.type === "salesUpdate") {
             document.getElementById("daily-sales").textContent = `₱${message.data.daily}`;
@@ -27,21 +27,9 @@ socket.onmessage = (event) => {
 socket.onclose = () => {
     console.warn("❌ WebSocket Disconnected! Retrying...");
     document.getElementById("status").textContent = "🔴 Disconnected. Reconnecting...";
-    setTimeout(() => {
-        location.reload(); // Refresh page to reconnect
-    }, 5000);
+    setTimeout(() => location.reload(), 5000);
 };
 
 socket.onerror = (error) => {
     console.error("❌ WebSocket Error:", error);
 };
-
-// Disable alarm button event
-document.getElementById("disable-alarm").addEventListener("click", () => {
-    if (socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type: "disableAlarm" }));
-        document.getElementById("alert-notification").style.display = "none";
-    } else {
-        console.error("🚨 WebSocket not connected. Cannot send disableAlarm.");
-    }
-});
