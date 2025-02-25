@@ -1,23 +1,55 @@
-const backendURL = "https://wi-fi-intrution-system.onrender.com"; // Change this to your actual backend URL
+const socket = new WebSocket("wss://wi-fi-intrution-system.onrender.com");
 
-function connectWebSocket() {
-    const socket = new WebSocket(backendURL);
+socket.onopen = () => {
+    console.log("✅ WebSocket connected!");
+};
 
-    socket.onopen = () => console.log("✅ WebSocket Connected");
+socket.onmessage = (event) => {
+    console.log("📩 Received data:", event.data);
+    
+    const salesData = JSON.parse(event.data);
 
-    socket.onmessage = (event) => {
-        const message = JSON.parse(event.data);
-        if (message.type === "salesUpdate") {
-            document.getElementById("daily-sales").innerText = message.data.daily || 'N/A';
-            document.getElementById("weekly-sales").innerText = message.data.weekly || 'N/A';
-            document.getElementById("monthly-sales").innerText = message.data.monthly || 'N/A';
+    // Update the dashboard UI
+    document.getElementById("daily-sales").innerText = `₱${salesData.data.daily}`;
+    document.getElementById("weekly-sales").innerText = `₱${salesData.data.weekly}`;
+    document.getElementById("monthly-sales").innerText = `₱${salesData.data.monthly}`;
+};
+
+socket.onerror = (error) => {
+    console.error("❌ WebSocket Error:", error);
+};
+
+socket.onclose = () => {
+    console.warn("⚠️ WebSocket Disconnected. Reconnecting...");
+    setTimeout(() => {
+        location.reload();
+    }, 5000);
+};
+const socket = new WebSocket("wss://wi-fi-intrution-system.onrender.com");
+
+socket.onopen = () => {
+    console.log("✅ WebSocket connected!");
+};
+
+socket.onmessage = (event) => {
+    console.log("📩 Message from server:", event.data);
+    try {
+        const data = JSON.parse(event.data);
+        if (data.type === "salesUpdate") {
+            document.getElementById("daily-sales").textContent = `₱${data.data.daily}`;
+            document.getElementById("weekly-sales").textContent = `₱${data.data.weekly}`;
+            document.getElementById("monthly-sales").textContent = `₱${data.data.monthly}`;
         }
-    };
+    } catch (error) {
+        console.error("❌ Error parsing WebSocket message:", error);
+    }
+};
 
-    socket.onclose = () => {
-        console.warn("❌ WebSocket Disconnected. Reconnecting...");
-        setTimeout(connectWebSocket, 3000); // Retry in 3 seconds
-    };
-}
+socket.onclose = () => {
+    console.log("❌ WebSocket disconnected! Reconnecting...");
+    setTimeout(() => location.reload(), 5000); // Auto-reconnect
+};
 
-connectWebSocket();
+socket.onerror = (error) => {
+    console.error("❌ WebSocket error:", error);
+};
