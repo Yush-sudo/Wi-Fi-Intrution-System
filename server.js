@@ -3,16 +3,25 @@ const http = require("http");
 const WebSocket = require("ws");
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 10000; // Make sure Render assigns the correct port
 
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ noServer: true }); // ✅ Fix: noServer mode
 
-// ✅ Handle WebSocket Upgrade Requests
+// ✅ Handle HTTP requests (Prevents "Upgrade Required" error)
+app.get("/", (req, res) => {
+    res.send("✅ WebSocket Server is Running! Use WebSockets to connect.");
+});
+
+// ✅ Handle WebSocket Upgrade Correctly (Fixes the crash issue)
 server.on("upgrade", (req, socket, head) => {
-    wss.handleUpgrade(req, socket, head, (ws) => {
-        wss.emit("connection", ws, req);
-    });
+    if (req.url === "/") {
+        wss.handleUpgrade(req, socket, head, (ws) => {
+            wss.emit("connection", ws, req);
+        });
+    } else {
+        socket.destroy();
+    }
 });
 
 // ✅ WebSocket Connection Handling
@@ -46,12 +55,7 @@ wss.on("connection", (ws) => {
     ws.on("close", () => clearInterval(interval));
 });
 
-// ✅ Handle HTTP Requests (Fix "Upgrade Required" Error)
-app.get("/", (req, res) => {
-    res.send("✅ WebSocket Server is Running! Use WebSockets to connect.");
-});
-
-// ✅ Start Server
+// ✅ Start Server on the Correct Port
 server.listen(PORT, "0.0.0.0", () => {
     console.log(`🚀 Server running on port ${PORT}`);
 });
