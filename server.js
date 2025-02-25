@@ -6,15 +6,8 @@ const PORT = process.env.PORT || 10000;
 const app = express();
 const server = http.createServer(app); // Create HTTP server
 
-// ✅ Attach WebSocket server to the HTTP server
-const wss = new WebSocket.Server({ noServer: true });
-
-server.on("upgrade", (request, socket, head) => {
-    console.log("📡 WebSocket Upgrade Request Received");
-    wss.handleUpgrade(request, socket, head, (ws) => {
-        wss.emit("connection", ws, request);
-    });
-});
+// ✅ Handle WebSocket Upgrade Requests
+const wss = new WebSocket.Server({ server });
 
 app.get("/", (req, res) => {
     res.send("✅ WebSocket Server is Running! Use WebSockets to connect.");
