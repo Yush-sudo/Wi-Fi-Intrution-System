@@ -4,19 +4,23 @@ const WebSocket = require("ws");
 
 const PORT = process.env.PORT || 10000;
 const app = express();
-const server = http.createServer(app); // Create an HTTP server
+const server = http.createServer(app); // Create HTTP server
 
-// Create WebSocket server and attach it to the HTTP server
-const wss = new WebSocket.Server({ server });
+// ✅ Attach WebSocket server to the HTTP server
+const wss = new WebSocket.Server({ noServer: true });
+
+server.on("upgrade", (request, socket, head) => {
+    console.log("📡 WebSocket Upgrade Request Received");
+    wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit("connection", ws, request);
+    });
+});
 
 app.get("/", (req, res) => {
     res.send("✅ WebSocket Server is Running! Use WebSockets to connect.");
 });
 
-server.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-});
-
+// ✅ WebSocket Server Logic
 wss.on("connection", (ws) => {
     console.log("✅ New WebSocket client connected!");
 
@@ -28,7 +32,7 @@ wss.on("connection", (ws) => {
         console.log("❌ WebSocket client disconnected");
     });
 
-    // Send sales updates every 5 seconds
+    // Simulate sales updates every 5 seconds
     setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({
@@ -43,6 +47,7 @@ wss.on("connection", (ws) => {
     }, 5000);
 });
 
-wss.on("error", (err) => {
-    console.error(`❌ WebSocket server error: ${err.message}`);
+// ✅ Start the Server
+server.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
 });
